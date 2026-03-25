@@ -1,0 +1,13 @@
+# Python virtual environment
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+
+# Frontend / Next.js
+node_modules/
+.next/
+out/
+build/
+.DS_Store
