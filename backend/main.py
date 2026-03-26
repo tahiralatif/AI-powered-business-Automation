@@ -20,6 +20,7 @@ from handoffagents.pitch_deck_agent import pitch_deck_agent
 from handoffagents.idea_generator import idea_generator_agent
 from guadrails.input_guardrail import input_guard_agent
 from guadrails.output_guardrails import out_guard_agent
+from workflow_manager import validate_idea_workflow
 
 # Load environment variables
 load_dotenv()
@@ -134,14 +135,23 @@ async def main():
 
     
     try:
-        result = await Runner.run(
-            competitorWebsiteScrapert,
-            input="https://github.com/panaversity/learn-agentic-ai/tree/main/01_ai_agents_first",
-            run_config=config
-        )
-        print(result.final_output)
+        user_input = "Validate my idea: A subscription box for eco-friendly office supplies"
         
-                
+        # --- Intent Detection for Autonomous Workflow ---
+        if any(keyword in user_input.lower() for keyword in ["validate", "check idea"]):
+            # Extract idea from input (simple split)
+            idea = user_input.lower().split("validate my idea:")[-1].strip() if ":" in user_input else user_input
+            result_workflow = await validate_idea_workflow(idea)
+            print(result_workflow)
+        else:
+            # Regular agent orchestration
+            result = await Runner.run(
+                triage_agent,
+                input=user_input,
+                run_config=config
+            )
+            print(result.final_output)
+        
     except InputGuardrailTripwireTriggered as e:
         print("invalind input")
         
