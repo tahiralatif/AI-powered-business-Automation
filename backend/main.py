@@ -20,13 +20,46 @@ from handoffagents.pitch_deck_agent import pitch_deck_agent
 from handoffagents.idea_generator import idea_generator_agent
 from guadrails.input_guardrail import input_guard_agent
 from guadrails.output_guardrails import out_guard_agent
+from fastapi import FastAPI, BackgroundTasks
 from workflow_manager import validate_idea_workflow
+from tasks import weekly_research_task, daily_competitor_check_task
 
-# Load environment variables
-load_dotenv()
+# FastAPI App for the SaaS backend
+app = FastAPI(title="AI Co-founder Automation Engine")
 
+@app.get("/")
+async def root():
+    return {"status": "AI Co-founder Automation Engine is running"}
 
+@app.get("/schedule/status")
+async def schedule_status():
+    """
+    Returns the status of scheduled tasks.
+    """
+    return {
+        "tasks": [
+            {"name": "Weekly Market Research", "schedule": "Every Monday at 9 AM"},
+            {"name": "Daily Competitor Check", "schedule": "Every Night at 11 PM"},
+            {"name": "Monthly Digest", "schedule": "1st of every Month"}
+        ],
+        "system": "Celery + Redis"
+    }
 
+@app.post("/schedule/run-now/{task_name}")
+async def run_task_immediately(task_name: str):
+    """
+    Manually triggers a task without waiting for the schedule.
+    """
+    if task_name == "weekly-research":
+        weekly_research_task.delay()
+        return {"msg": "Weekly research task triggered in background."}
+    elif task_name == "competitor-check":
+        daily_competitor_check_task.delay()
+        return {"msg": "Competitor check task triggered in background."}
+    else:
+        return {"error": "Unknown task name."}
+
+# (Existing main() function and other code below)
 async def main():
         
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
