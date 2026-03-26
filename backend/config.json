@@ -1,0 +1,13 @@
+{
+    "user_id": "founder_001",
+    "industry": "AI SaaS",
+    "competitors": [
+        "https://www.tome.app",
+        "https://gamma.app"
+    ],
+    "email_address": "tahira@example.com",
+    "slack_webhook_url": "",
+    "report_language": "english",
+    "monitoring_enabled": true,
+    "last_updated": "2026-03-26"
+}

@@ -13,12 +13,16 @@ from tools.finance_tool import finance_tool
 from tools.report_export import export_report
 from tools.market_research_tool import market_research_tool
 
+# Import notifications
+from integrations.email_sender import send_report_email
+from integrations.slack_notifier import send_slack_alert
+
 async def validate_idea_workflow(idea: str) -> str:
     """
     Autonomous Workflow: Idea Validation Chain
     Steps: Trends -> Competitors -> SWOT/Finance -> Report
     """
-    print(f"\n🚀 Starting Autonomous Workflow for Idea: '{idea}'")
+    print(f"\n Starting Autonomous Workflow for Idea: '{idea}'")
     
     # --- STEP 1: TREND RESEARCH ---
     print("[Step 1/4] 📊 Fetching trends from Reddit, X, and GNews...")
@@ -102,8 +106,18 @@ async def validate_idea_workflow(idea: str) -> str:
         # Exporting as PDF
         report_path = export_report(trends=report_trends, format_type="pdf", output_name=report_name)
         
-        print(f"✅ Workflow Complete! Report saved at: {report_path}")
-        return f"Autonomous Workflow for '{idea}' finished successfully.\nReport: {report_path}\nSummary: SWOT and Financial Analysis included."
+        # --- NEW: SEND NOTIFICATIONS ---
+        recipient = os.getenv("USER_EMAIL", "your-email@example.com")
+        summary_msg = f"Feasibility report for '{idea}' is ready. SWOT and Financial analysis included."
+        
+        # Send Slack Alert
+        send_slack_alert(f"🚀 *New Feasibility Report Generated*\nIdea: {idea}\nFile: {report_path}")
+        
+        # Send Email
+        send_report_email(report_path=report_path, recipient_email=recipient, summary=summary_msg)
+
+        print(f"✅ Workflow Complete! Report saved and notifications sent.")
+        return f"Autonomous Workflow for '{idea}' finished successfully.\nReport: {report_path}\nNotifications: Sent via Email & Slack."
 
     except Exception as e:
         print(f"⚠️ Report export error: {e}")
