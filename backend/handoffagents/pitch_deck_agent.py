@@ -1,8 +1,6 @@
 from agents import Agent, ModelSettings
 from agent_hooks import AgentBasedHooks
 from tools.report_export import export_report
-from tools.report_export import visualize_data
-from tools.report_export import export_pitchdeck
 
 # Simple GPT-only Pitch Deck Generator Agent
 pitch_deck_agent = Agent(
@@ -23,7 +21,7 @@ pitch_deck_agent = Agent(
     10. Funding Ask
     Make it practical, concise, and persuasive.
     """,
-    tools=[export_report, visualize_data, export_pitchdeck],  
+    tools=[export_report],
     hooks=AgentBasedHooks(),
     model_settings=ModelSettings(
         tool_choice="required",

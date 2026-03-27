@@ -1,34 +1,54 @@
-import requests
+import os
+import praw
+from dotenv import load_dotenv
 from agents import function_tool
 
-@function_tool
-def get_reddit_trending(subreddit: str = "popular", limit: int = 5) -> list:
+load_dotenv()
+
+def get_reddit_client():
     """
-    Fetch trending posts from Reddit without authentication.
+    Initializes the PRAW Reddit client using environment variables.
+    """
+    client_id = os.getenv("REDDIT_CLIENT_ID")
+    client_secret = os.getenv("REDDIT_CLIENT_SECRET")
+    user_agent = os.getenv("REDDIT_USER_AGENT", "AI-Co-founder:v1.0")
+
+    if not client_id or not client_secret:
+        return None
+
+    return praw.Reddit(
+        client_id=client_id,
+        client_secret=client_secret,
+        user_agent=user_agent
+    )
+
+@function_tool
+def get_reddit_trending(subreddit: str = "startups", limit: int = 5) -> list:
+    """
+    Fetch trending/top posts from a specific subreddit using official PRAW API.
 
     Args:
-        subreddit (str): Subreddit name (default 'popular')
+        subreddit (str): Subreddit name (default 'startups')
         limit (int): Number of posts to fetch (default 5)
 
     Returns:
         list: List of dictionaries with title, score, subreddit, and URL
     """
-    url = f"https://www.reddit.com/r/{subreddit}/top.json?limit={limit}&t=day"
-    headers = {"User-Agent": "hackathon-app/0.1"}
-    response = requests.get(url, headers=headers)
+    reddit = get_reddit_client()
+    
+    if not reddit:
+        return [{"error": "Reddit API credentials not configured in .env"}]
 
-    posts = []
-    if response.status_code == 200:
-        data = response.json()
-        for item in data["data"]["children"]:
-            post = item["data"]
+    try:
+        sub = reddit.subreddit(subreddit)
+        posts = []
+        for post in sub.top(time_filter="day", limit=limit):
             posts.append({
-                "title": post["title"],
-                "score": post["score"],
-                "subreddit": post["subreddit"],
-                "url": f"https://reddit.com{post['permalink']}"
+                "title": post.title,
+                "score": post.score,
+                "subreddit": post.subreddit.display_name,
+                "url": f"https://reddit.com{post.permalink}"
             })
-    else:
-        return [{"error": f"Failed to fetch: {response.status_code}"}]
-
-    return posts
+        return posts
+    except Exception as e:
+        return [{"error": f"Failed to fetch Reddit data: {str(e)}"}]
